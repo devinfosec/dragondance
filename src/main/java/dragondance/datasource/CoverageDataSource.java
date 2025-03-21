@@ -292,6 +292,8 @@ public class CoverageDataSource implements AutoCloseable{
 				mapValues[2].intValue(),
 				0);
 		
+		Log.debug("offset: " + be.getOffset() + ", size: " + be.getSize() + ", id: " + be.getModuleId());
+
 		return be;
 	}
 	
@@ -337,6 +339,7 @@ public class CoverageDataSource implements AutoCloseable{
 	protected void pushEntry(BlockEntry entry) {
 		if (this.mainModule == null || (this.mainModule != null && isMainModuleEntry(entry))) {
 			this.entries.add(entry);
+			Log.info("Added entry! " + this.entries.size());
 		}
 	}
 	

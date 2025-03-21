@@ -26,6 +26,7 @@ import dragondance.Globals;
 import dragondance.StringResources;
 import dragondance.exceptions.InvalidInstructionAddress;
 import dragondance.util.Util;
+import dragondance.Log;
 import generic.concurrent.GThreadPool;
 import generic.jar.ResourceFile;
 import generic.json.JSONError;
@@ -49,17 +50,39 @@ import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.task.DummyCancellableTaskMonitor;
 import ghidra.util.task.TaskMonitor;
+import ghidra.app.decompiler.*;
 
 
 public class DragonHelper {
 	private static PluginTool tool = null;
 	private static FlatProgramAPI fapi = null;
 	private static GThreadPool tpool = null;
+	private static ColorizingService colorService = null;
+
+	// may move these later
+	private static boolean decompHighlightEnabled = false;
+	private static DecompilerHighlighter decompHighlighter= null;
 	
+	private static class DecompMatcher implements CTokenHighlightMatcher {
+
+        public void start(ClangNode root) {
+            traverseAST((ClangTokenGroup)root, Color.WHITE);
+        }
+
+        public Color getTokenHighlight(ClangToken token) {
+            return token.getHighlight();
+        }
+
+        public void end() {
+            return;
+        }
+
+    }
 	
 	public static void init(PluginTool pluginTool, FlatProgramAPI api) {
 		DragonHelper.tool = pluginTool;
 		DragonHelper.fapi = api;
+		colorService = tool.getService(ColorizingService.class);
 	}
 	
 	public static int startTransaction(String name) {
@@ -524,12 +547,14 @@ public class DragonHelper {
 		
 		Address ba;
 		
-		ColorizingService colorService = tool.getService(ColorizingService.class);
+		// ColorizingService colorService = tool.getService(ColorizingService.class);
 		
 		if (colorService == null) {
 			return false;
 		}
-		
+
+		Log.debug("" + addr);
+
 		ba = getAddress(addr);
 		
 		colorService.setBackgroundColor(ba, ba, color);
@@ -541,7 +566,7 @@ public class DragonHelper {
 		
 		Address ba;
 		
-		ColorizingService colorService = tool.getService(ColorizingService.class);
+		
 		
 		if (colorService == null) {
 			return false;
@@ -553,7 +578,66 @@ public class DragonHelper {
 		
 		return true;
 	}
+
+	public static boolean setDecompColor() {
+		DecompilerHighlightService highlightService = null;
+		highlightService = tool.getService(DecompilerHighlightService.class);
+		// TODO: figure out how to dispose of a highlighter...
+        
+
+		if(decompHighlighter == null) {
+			CTokenHighlightMatcher decompMatcher = new DecompMatcher();
+			decompHighlighter = highlightService.createHighlighter("DecompHighlighter", decompMatcher);
+		}
+
+		if(!decompHighlightEnabled) {
+        	decompHighlighter.applyHighlights();
+			decompHighlightEnabled = true;
+		}
+		else {
+			decompHighlighter.clearHighlights();
+			decompHighlightEnabled = false;
+		}
+
+		return true;
+	}
 	
+	private static void traverseAST(ClangTokenGroup tokenGroup, Color prevColor) {
+
+        Color currColor = prevColor;
+
+        // Traverse all children
+        for (int i = 0; i < tokenGroup.numChildren(); i++) {
+            ClangNode childToken = tokenGroup.Child(i);
+
+            if(childToken instanceof ClangBreak) {
+                prevColor = Color.WHITE;
+            }
+
+            // Recursively print information about child tokens
+            if (childToken instanceof ClangTokenGroup) {
+                // Recursively traverse subgroups
+                traverseAST((ClangTokenGroup)childToken, prevColor);  
+            } else {
+                ClangToken token = (ClangToken)childToken;
+
+                currColor = prevColor;
+
+                Address min = token.getMinAddress();
+                if(min != null) currColor = colorService.getBackgroundColor(min);
+
+                // reset highlighter on brackets, 'ClangBreak' follows anyway
+                if(childToken.toString().equals("{")) {
+                    currColor = Color.WHITE;
+                }
+
+                childToken.setHighlight(currColor);
+
+                prevColor = currColor;
+            }
+        }
+    }
+
 	public static String getStringFromURL(String url) {
 		try {
 			URL u = new URL(url);

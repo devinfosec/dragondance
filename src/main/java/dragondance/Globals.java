@@ -15,7 +15,7 @@ public class Globals {
 	public static final float MIN_HUE = 190.0f;
 	public static final float MAX_HUE = 360.0f;
 	
-	public static final String version = "0.2.2";
+	public static final String version = "1.0.0";
 	public static final String verPhase = "beta";
 	
 }

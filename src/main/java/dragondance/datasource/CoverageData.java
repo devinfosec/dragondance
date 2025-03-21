@@ -49,6 +49,8 @@ public class CoverageData implements AutoCloseable {
 		this.addressMap = new HashMap<Long,List<InstructionInfo>>();
 		
 		this.ownerSession = SessionManager.getActiveSession();
+
+		Log.enableVerbose(true);
 	}
 	
 	private static CoverageData newLogical() {

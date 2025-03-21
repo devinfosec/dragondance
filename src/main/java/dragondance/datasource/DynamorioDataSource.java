@@ -117,8 +117,12 @@ public class DynamorioDataSource extends CoverageDataSource {
 	private void readEntries() {
 		BlockEntry entry;
 		
+		int total = 0;
+
 		while ((entry = this.readEntry()) != null) {
 			this.pushEntry(entry);
+			Log.debug("entry size: " + total);
+			total++;
 		}
 	}
 	

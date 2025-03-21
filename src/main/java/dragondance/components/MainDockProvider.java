@@ -130,6 +130,7 @@ public class MainDockProvider extends ComponentProvider implements GuiAffectedOp
 		tool.addLocalAction(this, actAbout);
 		tool.addLocalAction(this, actCheckNewVer);
 		
+		// add coverage data
 		DockingAction actImport = new DockingAction("Import coverage data",getName()) {
 
 			@Override
@@ -139,10 +140,29 @@ public class MainDockProvider extends ComponentProvider implements GuiAffectedOp
 			
 		};
 		
+		// TODO: add custom jpg to jar for use
+		ImageIcon decompIcon = new ImageIcon(this.getClass().getClassLoader().getResource("images/paintbrush.jpg"));
+
 		actImport.setToolBarData(new ToolBarData(Icons.ADD_ICON, null));
 		
 		tool.addLocalAction(this, actImport);
 		actImport.setEnabled(true);
+
+		// enable decompiler coloring
+		DockingAction actDecompColor = new DockingAction("Enable decompiler coloring",getName()) {
+
+			@Override
+			public void actionPerformed(ActionContext context) {
+				((MainDockProvider)context.getComponentProvider()).enableDecompColoringAsync();
+			}
+			
+		};
+		
+		// probably going to change it to a checkbox later, who knows
+		actDecompColor.setToolBarData(new ToolBarData(decompIcon, null));
+		
+		tool.addLocalAction(this, actDecompColor);
+		actDecompColor.setEnabled(true);
 	}
 	
 	private String newLine(int count) {
@@ -331,6 +351,10 @@ public class MainDockProvider extends ComponentProvider implements GuiAffectedOp
 				DragonHelper.showWarning("File not found");
 			}
 		});
+	}
+
+	private void enableDecompColoringAsync() {
+		DragonHelper.setDecompColor();
 	}
 	
 	private int coverageIdToTableRow(int id) {
