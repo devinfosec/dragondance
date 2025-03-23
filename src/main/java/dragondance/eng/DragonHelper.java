@@ -265,7 +265,7 @@ public class DragonHelper {
 			return false;
 		
 		if (!isValidExecutableSectionAddress(addr)) {
-			showWarning("%x is not valid offset.",addr);
+			// showWarning("%x is not valid offset.",addr);
 			return false;
 		}
 		
@@ -395,10 +395,16 @@ public class DragonHelper {
 			
 			DragonHelper.goToAddress(naddr);
 			
-			boolean choice = DragonHelper.showYesNoMessage("Warning", 
-					StringResources.INVALID_CODE_ADDRESS_FIX_MESSAGE,
-					naddr);
+			// I removed this codde for a simple reason: if we get coverage, its
+			// in an executable section, and its not disassembled lets just go ahead 
+			// and disassemble it
+
+			// boolean choice = DragonHelper.showYesNoMessage("Warning", 
+			// 		StringResources.INVALID_CODE_ADDRESS_FIX_MESSAGE,
+			// 		naddr);
 			
+			boolean choice = true;
+
 			if (choice) {
 				
 				if (!disassemble(naddr)) {
